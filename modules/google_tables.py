@@ -13,10 +13,11 @@ load_dotenv()
 TABLE_LINK = os.environ.get("table_link")
 SHEET_NAME_STATS = os.environ.get("sheet_name_stats")
 SHEET_NAME_CITIES = os.environ.get("sheet_name_cities")
+FILENAME = os.environ.get("filename") 
 
 def client_init_json() -> Client:
     """Создание клиента для работы с Google Sheets."""
-    return service_account(filename='./data/loader_test.json')
+    return service_account(filename=f'./data/{FILENAME}.json')
 
 def get_table_by_url(client: Client, table_url):
     """Получение таблицы из Google Sheets по ссылке."""
