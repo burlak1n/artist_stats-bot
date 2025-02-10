@@ -1,0 +1,7 @@
+loguru
+python-dotenv
+requests
+aiogram
+numpy
+pandas
+vkbottle
