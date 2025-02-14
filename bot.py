@@ -1,10 +1,11 @@
 from enum import Enum
 import os
+import sys
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
-# from aiogram.filters import CommandStart, StateFilter
+from aiogram.filters import Command
 # from aiogram.fsm.context import FSMContext
 # from aiogram.fsm.state import State, StatesGroup
 
@@ -129,7 +130,13 @@ async def get_data_about_musician(musician: str, city: str) -> str:
 #     except Exception as e:
 #         logger.exception(e)
 #         await message.answer("Возникла ошибка, попробуйте ещё раз позднее")
-
+@dp.message(Command("reset"), F.from_user.id.in_(ALLOWED_USERS))
+async def table_handler(message: Message):
+    logger.debug(f"Введена команда /reset пользователем {message.from_user.id}")
+    await message.answer("Бот перезагружен")
+    python = sys.executable  # Получаем путь к текущему интерпретатору Python
+    os.execl(python, python, *sys.argv)
+    
 @dp.message(F.text, F.from_user.id.in_(ALLOWED_USERS))
 async def artist_data_handler(message: Message):
     a = message.text.split(",")

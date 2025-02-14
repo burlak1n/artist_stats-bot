@@ -118,11 +118,16 @@ async def test_get_data(table_link = TABLE_TOUR_LINK, sheet_name_cities= SHEET_N
 async def update_worksheet(worksheet, arr):
     cells_to_update = []
     for i in arr:
-        stats = await get_targeting_stats(i["city"], i["artist"])
+        await asyncio.sleep(2.4)
+        try:
+            stats = await get_targeting_stats(i["city"], i["artist"])
+        except:
+            continue
         if stats:
             row_index = i["index"]
             l = stats["listeners"]
             f = stats["group_followers"]
+            logger.info(f"{stats}")
             if l:
                 cells_to_update.append({
                     "range": f"C{row_index}",  # Ячейка для слушателей
@@ -136,7 +141,6 @@ async def update_worksheet(worksheet, arr):
             if len(cells_to_update) >= 10:
                 worksheet.batch_update(cells_to_update)
                 cells_to_update = []
-            await asyncio.sleep(2.4)
     logger.info(f"Cells {cells_to_update}")
     if cells_to_update:
         worksheet.batch_update(cells_to_update)
@@ -175,17 +179,25 @@ async def fill_table_artist(table_link = TABLE_LINK, sheet_name_stats = SHEET_NA
             logger.info(artist)
             # data_yand = await get_stats(artist)
             # try:
-            data_vk = await get_targeting_stats(1, artist)
-            if data_vk:
+            await asyncio.sleep(2.4)
+            data_vk = None
+            try:
+                data_vk = await get_targeting_stats(1, artist)
                 data = [
                     data_vk["group"]["group_link"], 
                     datetime.now().strftime("%d.%m.%y"),
                     data_vk["listeners"],
                     data_vk["group_followers"]
                 ]
-            else:
+            except:
                 logger.warning("Данные от ВК не были получены")
-                continue
+                if data_vk:
+                    data = [
+                        data_vk["group_link"], 
+                        datetime.now().strftime("%d.%m.%y"),
+                        "",
+                        ""
+                    ]
             # except Exception:
             #     data = ["", datetime.now().strftime("%d.%m.%y"), "", ""]
             for i, col_index in enumerate(cols_to_check):  # Перебираем столбцы D, E, F, H, I
@@ -201,11 +213,13 @@ async def fill_table_artist(table_link = TABLE_LINK, sheet_name_stats = SHEET_NA
                 #TODO: А если загружать какое-то число строк и их обновлять?
                 if updates:
                     worksheet.batch_update(updates)
+                    logger.info(f"Updates: {updates}")
                     updates = []
-            await asyncio.sleep(2.4)
+            
 
         # Выполняем массовое обновление
         if updates:
+            logger.info(f"Updates: {updates}")
             worksheet.batch_update(updates)
 
         logger.info(f"Обновлено {len(rows_to_update)} строк.")

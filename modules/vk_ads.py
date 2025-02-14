@@ -191,7 +191,7 @@ async def get_targeting_stats(city: str | int, artist: str):
         }
     # logger.info(city_coord, artist, response)
         return response
-
+    return group
 async def main():
     await get_targeting_stats("Москва", "Baby Cute")
 
