@@ -50,7 +50,8 @@ async def search_groups(artist: str):
 
         # groups = await api.groups.search(q=artist, sort=0, count=1)
     
-    r = get_artist_group(artist)["response"]["items"]
+    r = await get_artist_group(artist)
+    r = r["response"]["items"]
     logger.info(r)
     if r:
         return {

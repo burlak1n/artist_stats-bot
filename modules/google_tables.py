@@ -184,6 +184,7 @@ async def fill_table_artist(table_link = TABLE_LINK, sheet_name_stats = SHEET_NA
                     data_vk["group_followers"]
                 ]
             else:
+                logger.warning("Данные от ВК не были получены")
                 continue
             # except Exception:
             #     data = ["", datetime.now().strftime("%d.%m.%y"), "", ""]
