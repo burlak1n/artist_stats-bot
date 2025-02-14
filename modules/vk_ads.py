@@ -10,8 +10,8 @@ from modules.utils import get_artist_link, find_closest_match
 from modules.test import get_artist_group
 # from modules.utils import find_city_coordinates
 
-logger.remove()
-logger.add(sys.stderr, level="INFO")
+# logger.remove()
+# logger.add(sys.stderr, level="INFO")
 
 load_dotenv()
 ACCESS_TOKEN = os.environ.get("vk_user_token")
