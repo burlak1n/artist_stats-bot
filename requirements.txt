@@ -5,3 +5,5 @@ aiogram
 numpy
 pandas
 vkbottle
+aiohttp
+gspread

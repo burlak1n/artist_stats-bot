@@ -1,50 +1,6 @@
-import os 
-
-from dotenv import load_dotenv
-
 from loguru import logger
 import aiohttp
-
-load_dotenv()
-sec = os.environ.get("google_secret")
-cx = os.environ.get("google_search_engine_id")
-
-async def google_search(artist_name: str):
-    """
-    Асинхронно выполняет поиск в OpenAI с использованием Custom Search API.
-    """
-    url = f"https://www.googleapis.com/customsearch/v1?key={sec}&cx={cx}"
-    params = {"q": "яндекс музыка " + artist_name,
-              "start": "1"}
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as r:
-                r.raise_for_status()
-                data = await r.json()
-                if "items" in data and data["items"]:
-                    return data["items"][0]
-                else:
-                    logger.warning(f"No search results found for {artist_name}")
-                    return {}  # Возвращаем пустой словарь, если нет результатов
-    except aiohttp.ClientError as e:
-        logger.error(f"Error during OpenAI search for {artist_name}: {e}")
-        return {}  # Возвращаем пустой словарь в случае ошибки
-    except Exception as e:
-        logger.exception(f"An unexpected error occurred during OpenAI search: {e}")
-        return {}  # Возвращаем пустой словарь в случае ошибки
-
-async def get_artist_link(artist_name: str) -> str:
-    """
-    Асинхронно получает ссылку на артиста, выполняя поиск в OpenAI.
-    """
-    result = await google_search(artist_name=artist_name)
-    if result and "link" in result:
-        link = result["link"]
-        logger.info(f"Found link: {link}")
-        return link
-    else:
-        logger.warning(f"Could not find artist link for {artist_name}")
-        return ""  # Возвращаем пустую строку, если ссылка не найдена
+from modules.utils import get_artist_link
 
 async def get_like(artist_id: str = "5880813"):
     """
@@ -52,9 +8,13 @@ async def get_like(artist_id: str = "5880813"):
     Использует aiohttp для асинхронных HTTP-запросов.
     """
     url = f"https://music.yandex.ru/handlers/artist.jsx?artist={artist_id}&what=&sort=&dir=&period=month&trackPage=0&trackPageSize=1&lang=ru&external-domain=music.yandex.ru&overembed=false&ncrnd=0.4035522368585789"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept": "application/json",
+    }
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
+            async with session.get(url, headers=headers) as r:
                 r.raise_for_status()  # Поднимает исключение для кодов ошибок 4xx/5xx
                 data = await r.json()
 

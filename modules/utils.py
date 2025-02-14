@@ -1,9 +1,9 @@
-import asyncio
 import json
 import os
 
-import numpy as np
-import pandas as pd
+import aiohttp
+from dotenv import load_dotenv
+from difflib import SequenceMatcher
 '''
 from io import BytesIO
 import time
@@ -16,11 +16,75 @@ from aiogram.types import BufferedInputFile
 '''
 
 from loguru import logger
-
+load_dotenv()
+sec = os.environ.get("google_secret")
+cx = os.environ.get("google_search_engine_id")
 # top_50_cities = None
 
 def json_beauty(data:dict) -> str:
     return (json.dumps(data, indent=2))
+
+async def google_search(artist_name: str, vk: bool = False):
+    """
+    Асинхронно выполняет поиск в Google с использованием Custom Search API.
+    """
+    url = f"https://www.googleapis.com/customsearch/v1?key={sec}&cx={cx}"
+    if vk:
+        params = {"q": artist_name + "группа вконтакте",
+              "start": 1}
+    else:
+        params = {"q": "яндекс музыка " + artist_name,
+              "start": 1}
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as r:
+                r.raise_for_status()
+                data = await r.json()
+                if "items" in data and data["items"]:
+                    return data["items"][0]
+                else:
+                    logger.warning(f"No search results found for {artist_name}")
+                    return {}  # Возвращаем пустой словарь, если нет результатов
+    except aiohttp.ClientError as e:
+        logger.error(f"Error during Google search for {artist_name}: {e}")
+        return {}  # Возвращаем пустой словарь в случае ошибки
+    except Exception as e:
+        logger.exception(f"An unexpected error occurred during Google search: {e}")
+        return {}  # Возвращаем пустой словарь в случае ошибки
+
+async def get_artist_link(artist_name: str, vk: bool = False) -> str:
+    """
+    Асинхронно получает ссылку на артиста, выполняя поиск в OpenAI.
+    """
+    result = await google_search(artist_name=artist_name, vk=vk)
+    if result and "link" in result:
+        link = result["link"]
+        logger.info(f"Found link: {link}")
+        return link
+    else:
+        logger.warning(f"Could not find artist link for {artist_name}")
+        return ""  # Возвращаем пустую строку, если ссылка не найдена
+def normalize_string(s):
+    s = s.lower()
+    s = "".join(c for c in s if c.isalnum() or c.isspace())
+    return s
+
+async def find_closest_match(query, candidates):
+    query = normalize_string(query)
+    closest_match = None
+    max_similarity = 0
+    i = 0
+    for candidate in candidates:
+        candidate_norm = normalize_string(candidate)
+        similarity = SequenceMatcher(None, query, candidate_norm).ratio()
+        if similarity > max_similarity:
+            max_similarity = similarity
+            id = i
+            # closest_match = candidate
+        i+=1
+
+    return id
 '''
 def get_screenshots(artist_id):
     screen = []
@@ -102,57 +166,59 @@ def pil_image_to_buffered_input_file(pil_image: Image.Image, filename: str = "im
         filename=filename
     )
 '''
-async def find_city_coordinates(city_name: str, radius: str = "50000") -> str:
-    """
-    return coordinates = '55.75586,37.61769,50000,-1,Москва'
-    if none = ''
-    """
-    city_string = await search_string_in_csv(city_name)
 
-    if not city_string:
-        return ""
+# Поиск координат (Для 40км)
+# async def find_city_coordinates(city_name: str, radius: str = "50000") -> str:
+#     """
+#     return coordinates = '55.75586,37.61769,50000,-1,Москва'
+#     if none = ''
+#     """
+#     city_string = await search_string_in_csv(city_name)
 
-    sep_string = city_string.split(",")
-    city_latitude = sep_string[-4]
-    city_longitude = sep_string[-3]
-    return_string = f"{city_latitude},{city_longitude},{radius},{city_name}"
-    logger.debug(return_string)
+#     if not city_string:
+#         return ""
+
+#     sep_string = city_string.split(",")
+#     city_latitude = sep_string[-4]
+#     city_longitude = sep_string[-3]
+#     return_string = f"{city_latitude},{city_longitude},{radius},{city_name}"
+#     logger.debug(return_string)
     
-    return return_string
+#     return return_string
 
-async def search_string_in_csv(data: str) -> str:
-    hard_directory = os.path.join("data", "city.csv")
-    directory = hard_directory if os.path.isfile(hard_directory) else "city.csv"
+# async def search_string_in_csv(data: str) -> str:
+#     hard_directory = os.path.join("data", "city.csv")
+#     directory = hard_directory if os.path.isfile(hard_directory) else "city.csv"
 
-    if not os.path.isfile(directory):
-        logger.error(f"File not found: {directory}")
-        return
+#     if not os.path.isfile(directory):
+#         logger.error(f"File not found: {directory}")
+#         return
 
-    try:
-        with open(directory, "r", encoding="utf-8") as csv_file:
-            for line in csv_file:
-                if data in line:
-                    return line
-    except Exception as e:
-        logger.error(f"Error reading file: {e}")
-    return
+#     try:
+#         with open(directory, "r", encoding="utf-8") as csv_file:
+#             for line in csv_file:
+#                 if data in line:
+#                     return line
+#     except Exception as e:
+#         logger.error(f"Error reading file: {e}")
+#     return
 
-async def get_top_50_cities(path: str = "./modules/city.csv"):
-    global top_50_cities
-    if not top_50_cities:
-        df = pd.read_csv(path)
-        df['population'] = pd.to_numeric(df['population'], errors='coerce')
-        df = df.dropna(subset=['population'])
-        df_sorted = df.sort_values(by='population', ascending=False) # сортировка по убыванию
-        top_50_cities_df = df_sorted.head(50)
-        top_50_cities = top_50_cities_df['address'].to_numpy()
-        top_50_cities = np.array([
-            (s.split(',')[1].strip() if len(s.split(',')) > 1 else s.split(',')[0].strip()).replace('г ', '').replace('Респ ', '').replace('обл', '')
-            for s in top_50_cities
-        ])
-        logger.info(top_50_cities)
+# async def get_top_50_cities(path: str = "./modules/city.csv"):
+#     global top_50_cities
+#     if not top_50_cities:
+#         df = pd.read_csv(path)
+#         df['population'] = pd.to_numeric(df['population'], errors='coerce')
+#         df = df.dropna(subset=['population'])
+#         df_sorted = df.sort_values(by='population', ascending=False) # сортировка по убыванию
+#         top_50_cities_df = df_sorted.head(50)
+#         top_50_cities = top_50_cities_df['address'].to_numpy()
+#         top_50_cities = np.array([
+#             (s.split(',')[1].strip() if len(s.split(',')) > 1 else s.split(',')[0].strip()).replace('г ', '').replace('Респ ', '').replace('обл', '')
+#             for s in top_50_cities
+#         ])
+#         logger.info(top_50_cities)
     
-    return top_50_cities
+#     return top_50_cities
 
-if __name__ == "__main__":
-    asyncio.run(get_top_50_cities())
+# if __name__ == "__main__":
+#     asyncio.run(get_top_50_cities())
