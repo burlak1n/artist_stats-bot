@@ -1,9 +1,13 @@
 import json
 import os
-
+import re
+from vk_api import VkApi
 import aiohttp
 from dotenv import load_dotenv
 from difflib import SequenceMatcher
+
+from urllib.parse import quote
+
 '''
 from io import BytesIO
 import time
@@ -85,6 +89,77 @@ async def find_closest_match(query, candidates):
         i+=1
 
     return id
+
+# auth_url = "https://oauth.vk.com/authorize?client_id=6121396&scope=211124232&redirect_uri=https://oauth.vk.com/blank.html&display=page&response_type=token&revoke=1"
+
+# client_id = 53003679
+# scope = "audio,ads,offline,groups,stats"  # Укажите нужные права доступа
+# redirect_uri = "https://oauth.vk.com/blank.html"
+# display = "page"
+# response_type = "token"
+# revoke = 1
+
+# auth_url = (
+#     f"https://oauth.vk.com/authorize?"
+#     f"client_id={client_id}&"
+#     f"scope={scope}&"
+#     f"redirect_uri={redirect_uri}&"
+#     f"display={display}&"
+#     f"response_type={response_type}&"
+#     f"revoke={revoke}"
+# )
+# auth_url = ("https://id.vk.com/authorize?"
+#     "response_type=code&"
+#     "client_id=12345&"
+#     "scope=email%20phone&redirect_uri=https%3A%2F%2Fyour.site&state=XXXRandomZZZ&code_challenge=K8KAyQ82WSEncryptedVerifierGYUDj8K&code_challenge_method=S256")
+
+# # Ваши параметры
+# client_id = 53003679
+# scope = "audio,ads,offline,groups,stats"  # Укажите нужные права доступа
+# redirect_uri = "https://oauth.vk.com/blank.html"
+# display = "page"
+# response_type = "code"  # Используем Authorization Code Flow
+# state = "XXXRandomZZZ"  # Уникальный идентификатор для защиты от CSRF
+# code_challenge = "K8KAyQ82WSEncryptedVerifierGYUDj8K"  # Зашифрованный код
+# code_challenge_method = "S256"  # Метод шифрования
+
+# # Кодируем параметры
+# encoded_scope = quote(scope)
+# encoded_redirect_uri = quote(redirect_uri)
+
+# client_id = 53003679
+# scope = "audio,ads,offline,groups,stats"  # Укажите нужные права доступа
+# redirect_uri = "https://oauth.vk.com/blank.html"
+# display = "page"
+# response_type = "token"  # Используем Implicit Flow
+# revoke = 1
+
+# # Кодируем параметры
+# scope = quote(scope)
+# encoded_redirect_uri = quote(redirect_uri)
+
+# # Формируем URL для авторизации
+# auth_url = (
+#     f"https://oauth.vk.com/authorize?"
+#     f"client_id={client_id}&"
+#     f"scope={scope}&"
+#     f"redirect_uri={encoded_redirect_uri}&"
+#     f"display={display}&"
+#     f"response_type={response_type}&"
+#     f"revoke={revoke}"
+# )
+
+# print(auth_url)
+
+# response = requests.get(auth_url, allow_redirects=True)
+# print(response.text)
+# # Извлекаем токен из URL
+# match = re.search(r"code=([^&]+)", response.url)
+# if match:
+#     access_token = match.group(1)
+#     print("Access Token:", access_token)
+# else:
+#     print("Токен не найден в URL.")
 '''
 def get_screenshots(artist_id):
     screen = []

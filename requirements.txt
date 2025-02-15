@@ -7,3 +7,4 @@ pandas
 vkbottle
 aiohttp
 gspread
+vk_api

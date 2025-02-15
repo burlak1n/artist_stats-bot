@@ -6,15 +6,12 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 from aiogram.filters import Command
-# from aiogram.fsm.context import FSMContext
-# from aiogram.fsm.state import State, StatesGroup
 
 from dotenv import load_dotenv
 
 from modules.logger import logger
 from modules import yamusic
 from modules.vk_ads import get_targeting_stats
-# from modules.utils import get_top_50_cities, get_screenshots
 from modules.google_tables import test_get_data, fill_table_artist
 
 load_dotenv()
@@ -41,12 +38,6 @@ kb = InlineKeyboardMarkup(
         ]
     ]
 )
-
-# class Form(StatesGroup):
-#     city = State()
-#     artist = State()
-
-# logger.debug(f"start https://t.me/{bot.get_me().username}")
 
 async def get_vk_data_about_musician(musician: str, city: str):
     vk_data = await get_targeting_stats(city, musician)
@@ -100,43 +91,13 @@ async def get_data_about_musician(musician: str, city: str) -> str:
     yand, artist_id = await get_yand_data_about_musician(musician)
     return f"{vk}{yand}", artist_id
 
-
-# @dp.message(CommandStart, StateFilter(None))
-# async def start_message_handler(message: Message, state: FSMContext):
-#     await state.set_state(Form.city)
-#     await message.answer("Введите город")
-
-# @dp.message(F.text, Form.city)
-# async def city_handler(message: Message, state: FSMContext):
-#     city = message.text
-#     city_coord = await city_finder.find_city_coordinates(city)
-#     if city_coord:
-#         await state.update_data(city=city)
-#         await message.answer("Введите артиста")
-#         await state.set_state(Form.artist)
-#     else:
-#         await message.answer("Город не найден!\nВведите город ещё раз")
-
-# @dp.message(F.text, Form.artist)
-# async def artist_handler(message: Message, state: FSMContext):
-#     artist = message.text
-#     data = await state.get_data()
-#     city = data["city"]
-#     await message.answer(f"Выполняется поиск по:\nг. {city}\n{artist}\nожидайте")
-#     try:
-#         txt = await get_data_about_musician(artist, city)
-#         await message.answer(txt, disable_web_page_preview=True)
-#         await state.clear()
-#     except Exception as e:
-#         logger.exception(e)
-#         await message.answer("Возникла ошибка, попробуйте ещё раз позднее")
 @dp.message(Command("reset"), F.from_user.id.in_(ALLOWED_USERS))
 async def table_handler(message: Message):
     logger.debug(f"Введена команда /reset пользователем {message.from_user.id}")
     await message.answer("Бот перезагружен")
     python = sys.executable  # Получаем путь к текущему интерпретатору Python
     os.execl(python, python, *sys.argv)
-    
+
 @dp.message(F.text, F.from_user.id.in_(ALLOWED_USERS))
 async def artist_data_handler(message: Message):
     a = message.text.split(",")

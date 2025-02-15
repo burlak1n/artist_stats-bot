@@ -4,17 +4,19 @@ import sys
 from loguru import logger
 from vkbottle import API
 import asyncio
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import requests
 from modules.utils import get_artist_link, find_closest_match
 from modules.test import get_artist_group
+from modules.auth import get_access_token
 # from modules.utils import find_city_coordinates
 
 # logger.remove()
 # logger.add(sys.stderr, level="INFO")
 
-load_dotenv()
-ACCESS_TOKEN = os.environ.get("vk_user_token")
+# load_dotenv()
+# ACCESS_TOKEN = os.environ.get("vk_user_token")
+ACCESS_TOKEN = get_access_token()
 api = API(ACCESS_TOKEN)
 criteria_sample = {
     "sex": 0,
@@ -26,23 +28,6 @@ data_sample = {
     "v": "5.199",
 }
 
-headers = {
-    'accept': '*/*',
-    'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'content-type': 'application/x-www-form-urlencoded',
-    'dnt': '1',
-    'origin': 'https://dev.vk.com',
-    'priority': 'u=1, i',
-    'referer': 'https://dev.vk.com/',
-    'sec-ch-ua': '"Chromium";v="133", "Not(A:Brand";v="99"',
-    'sec-ch-ua-mobile': '?0',
-    'sec-ch-ua-platform': '"macOS"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-site',
-    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
-}
-
 async def search_groups(artist: str):
     # group_link = await get_artist_link(artist, vk=True)
     # if not group_link:
@@ -50,7 +35,7 @@ async def search_groups(artist: str):
 
         # groups = await api.groups.search(q=artist, sort=0, count=1)
     
-    r = await get_artist_group(artist)
+    r = await get_artist_group(artist, ACCESS_TOKEN)
     r = r["response"]["items"]
     logger.info(r)
     if r:
@@ -154,7 +139,7 @@ async def get_ts_by_musician_listener_city(city_coordinate, musician_id: str, gr
         "link_url": group_link,
         "criteria": json.dumps(criteria),
     }
-
+    logger.info(data)
     a = requests.post("https://api.vk.com/method/ads.getTargetingStats", data=data).json()
     try:
         a = a["response"]["audience_count"]
