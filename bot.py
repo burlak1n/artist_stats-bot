@@ -43,7 +43,10 @@ async def get_vk_data_about_musician(musician: str, city: str):
     vk_data = await get_targeting_stats(city, musician)
 
     logger.info(vk_data)
-
+    if "group_id" in vk_data:
+        return f'''{musician}, г.{city}
+Не получилось определить исполнителя. Группа <a href="{vk_data["group_link"]}">VK</a>
+'''
     group_followers = vk_data["group_followers"]
     listeners = vk_data["listeners"]
     if not group_followers or not listeners:
